@@ -1,0 +1,69 @@
+﻿@HotelListing.Api_HostAddress = https://localhost:7213
+
+GET {{HotelListing.Api_HostAddress}}/api/countries
+
+###
+
+POST {{HotelListing.Api_HostAddress}}/api/countries
+Content-Type: application/json
+
+{
+  "name": "Test Country",
+  "shortName": "TC"
+}
+
+###
+
+DELETE {{HotelListing.Api_HostAddress}}/api/countries/{{id}}
+
+###
+
+@id=1
+GET {{HotelListing.Api_HostAddress}}/api/countries/{{id}}
+
+###
+
+PUT {{HotelListing.Api_HostAddress}}/api/countries/{{id}}
+Content-Type: application/json
+
+{
+  "Id": 1,
+  "name": "Jamaica",
+  "shortName": "JM"
+}
+
+##################################################################################
+
+GET {{HotelListing.Api_HostAddress}}/api/hotels
+
+###
+
+POST {{HotelListing.Api_HostAddress}}/api/hotels
+Content-Type: application/json
+
+{
+    "id": 4,
+    "name": "Grand Plaza",
+    "address": "123 Main St",
+    "rating": 4.5,
+    "countryId": 1
+}
+
+###
+
+DELETE {{HotelListing.Api_HostAddress}}/api/hotels/{{id}}
+
+###
+
+GET {{HotelListing.Api_HostAddress}}/api/hotels/{{id}}
+
+###
+
+PUT {{HotelListing.Api_HostAddress}}/api/hotels/{{id}}
+Content-Type: application/json
+
+{
+  //Hotel
+}
+
+###

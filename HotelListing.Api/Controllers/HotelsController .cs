@@ -51,7 +51,7 @@ public class HotelsController(HotelListingDbContext context) : ControllerBase
         hotel.Rating = hotelDto.Rating;
         hotel.CountryId = hotelDto.CountryId;
 
-        _context.Entry(hotelDto).State = EntityState.Modified;
+        _context.Entry(hotel).State = EntityState.Modified;
 
         try
         {

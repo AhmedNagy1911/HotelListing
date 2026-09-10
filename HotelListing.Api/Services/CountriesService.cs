@@ -82,4 +82,13 @@ public class CountriesService(HotelListingDbContext context) : ICountriesService
         _context.Countries.Remove(country);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> CountryExistsAsync(int id)
+    {
+        return await _context.Countries.AnyAsync(e => e.Id == id);
+    }
+    public async Task<bool> CountryExistsAsync(string name)
+    {
+        return await _context.Countries.AnyAsync(e => e.Name == name);
+    }
 }

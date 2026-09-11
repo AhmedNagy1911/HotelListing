@@ -1,19 +1,21 @@
-﻿using HotelListing.Api.Contracts;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using HotelListing.Api.Contracts;
 using HotelListing.Api.Data;
 using HotelListing.Api.DTOs.Hotel;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Api.Services;
 
-public class HotelsService(HotelListingDbContext context) : IHotelsService
+public class HotelsService(HotelListingDbContext context, IMapper mapper) : IHotelsService
 {
     private readonly HotelListingDbContext _context = context;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<IEnumerable<GetHotelDto>> GetHotelsAsync()
     {
         var hotels = await _context.Hotels
-                  .Include(x => x.Country)
-                 .Select(x => new GetHotelDto(x.Id, x.Name, x.Address, x.Rating, x.CountryId,x.Country!.Name))
+                 .ProjectTo<GetHotelDto>(_mapper.ConfigurationProvider)
                  .ToListAsync();
 
         return hotels;
@@ -23,42 +25,35 @@ public class HotelsService(HotelListingDbContext context) : IHotelsService
     {
         var hotel = await _context.Hotels
             .Where(x => x.Id == id)
-            .Select(x => new GetHotelDto(x.Id, x.Name, x.Address, x.Rating, x.CountryId, x.Country!.Name))
+            .ProjectTo<GetHotelDto>(_mapper.ConfigurationProvider)
             .FirstOrDefaultAsync();
 
         return hotel ?? null;
+    }
+    public async Task<GetHotelDto> CreateHotelAsync(CreateHotelDto hotelDto)
+    {
+        var hotel = _mapper.Map<Hotel>(hotelDto);
+        
+        _context.Hotels.Add(hotel);
+        await _context.SaveChangesAsync();
+
+        var result = _mapper.Map<GetHotelDto>(hotel);
+
+        return result;
     }
 
     public async Task UpdateHotelAsync(int id, UpdateHotelDto updateDto)
     {
         var hotel = await _context.Hotels.FindAsync(id) ?? throw new KeyNotFoundException($"Country with ID {id} not found.");
 
-        hotel.Name = updateDto.Name;
-        hotel.Address = updateDto.Address;
-        hotel.Rating = updateDto.Rating;
-        hotel.CountryId = updateDto.CountryId;
+       _mapper.Map(updateDto, hotel);
 
         _context.Entry(hotel).State = EntityState.Modified;
          _context.Hotels.Update(hotel);
         await _context.SaveChangesAsync();
 
     }
-    public async Task<GetHotelDto> CreateHotelAsync(CreateHotelDto hotelDto)
-    {
-        var hotel = new Hotel
-        {
-            Name = hotelDto.Name,
-            Address = hotelDto.Address,
-            Rating = hotelDto.Rating,
-            CountryId = hotelDto.CountryId
-        };
-
-        _context.Hotels.Add(hotel);
-        await _context.SaveChangesAsync();
-
-        return new GetHotelDto(hotel.Id, hotel.Name, hotel.Address, hotel.Rating, hotel.CountryId,hotel.Country?.Name ?? string.Empty);
-    }
-
+    
     public async Task DeleteHotelAsync(int id)
     {
         var hotel = await _context.Hotels

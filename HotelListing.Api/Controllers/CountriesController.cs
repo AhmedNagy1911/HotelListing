@@ -1,5 +1,4 @@
 using HotelListing.Api.Contracts;
-using HotelListing.Api.Data;
 using HotelListing.Api.DTOs.Country;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,53 +6,46 @@ namespace HotelListing.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CountriesController(ICountriesService countriesService) : ControllerBase
+public class CountriesController(ICountriesService countriesService) : BaseApiController
 {
-    private readonly ICountriesService _countriesService = countriesService;
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetCountriesDto>>> GetCountries()
     {
-        var countries = await _countriesService.GetCountriesAsync();
-
-        return Ok(countries);
+        var result = await countriesService.GetCountriesAsync();
+        return ToActionResult(result);
     }
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<GetCountryDto>> GetCountry(int id)
     {
-        var country = await _countriesService.GetCountryAsync(id);
-
-        if (country == null)
-            return NotFound();
-
-        return Ok(country);
+        var result = await countriesService.GetCountryAsync(id);
+        return ToActionResult(result);
     }
+
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutCountry(int id, UpdateCountryDto countryDto)
+    public async Task<IActionResult> PutCountry(int id, UpdateCountryDto updateDto)
     {
-        if (id != countryDto.Id)
-            return BadRequest();
-
-        await _countriesService.UpdateCountryAsync(id, countryDto);
-
-        return NoContent();
+        var result = await countriesService.UpdateCountryAsync(id, updateDto);
+        return ToActionResult(result);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<Country>> PostCountry(CreateCountryDto createCountryDto)
-    {
-        var resultDto = await _countriesService.CreateCountryAsync(createCountryDto);
 
-        return CreatedAtAction("GetCountry", new { id = resultDto.Id }, resultDto);
+    [HttpPost]
+    public async Task<ActionResult<GetCountryDto>> PostCountry(CreateCountryDto createDto)
+    {
+        var result = await countriesService.CreateCountryAsync(createDto);
+
+        if (!result.IsSuccess) return MapErrorsToResponse(result.Errors);
+
+        return CreatedAtAction(nameof(GetCountry), new { id = result.Value!.Id }, result.Value);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCountry(int id)
     {
-        await _countriesService.DeleteCountryAsync(id);
-
-        return NoContent();
+        var result = await countriesService.DeleteCountryAsync(id);
+        return ToActionResult(result);
     }
 }

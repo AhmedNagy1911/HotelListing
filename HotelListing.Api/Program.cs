@@ -13,7 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<HotelListingDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-builder.Services.AddIdentityCore<IdentityUser>(options => { })
+builder.Services.AddIdentityCore<ApplicationUser>(options => { })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<HotelListingDbContext>();
 
@@ -23,7 +23,7 @@ builder.Services.AddScoped<IHotelsService, HotelsService>();
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<CountryMappingProfile>();
-    cfg.AddProfile<HotelMappingProfile>(); 
+    cfg.AddProfile<HotelMappingProfile>();
 });
 
 

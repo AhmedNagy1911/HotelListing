@@ -52,16 +52,14 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
         {
             var exists = await CountryExistsAsync(createDto.Name);
             if (exists)
-            {
                 return Result<GetCountryDto>.Failure(new Error(ErrorCodes.Conflict, $"Country with name '{createDto.Name}' already exists."));
-            }
 
             var country = _mapper.Map<Country>(createDto);
 
-            context.Countries.Add(country);
-            await context.SaveChangesAsync();
+            _context.Countries.Add(country);
+            await _context.SaveChangesAsync();
 
-            var dto = await context.Countries
+            var dto = await _context.Countries
                 .Where(c => c.Id == country.Id)
                 .ProjectTo<GetCountryDto>(_mapper.ConfigurationProvider)
                 .FirstAsync();
@@ -70,7 +68,8 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
         }
         catch
         {
-            return Result<GetCountryDto>.Failure(new Error(ErrorCodes.Failure, "An unexpected error occurred while creating the country."));
+            return Result<GetCountryDto>.Failure
+                (new Error(ErrorCodes.Failure, "An unexpected error occurred while creating the country."));
         }
     }
 
@@ -80,24 +79,21 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
         try
         {
             if (id != updateDto.Id)
-            {
                 return Result.BadRequest(new Error(ErrorCodes.Validation, "Id route value does not match payload Id."));
-            }
 
-            var country = await context.Countries.FindAsync(id);
+            var country = await _context.Countries.FindAsync(id);
             if (country is null)
-            {
                 return Result.NotFound(new Error(ErrorCodes.NotFound, $"Country '{id}' was not found."));
-            }
 
-            mapper.Map(updateDto, country);
-            await context.SaveChangesAsync();
+            _mapper.Map(updateDto, country);
+            await _context.SaveChangesAsync();
 
             return Result.Success();
         }
         catch
         {
-            return Result.Failure(new Error(ErrorCodes.Failure, "An unexpected error occurred while updating the country."));
+            return Result.Failure
+                (new Error(ErrorCodes.Failure, "An unexpected error occurred while updating the country."));
         }
     }
 
@@ -105,14 +101,12 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
     {
         try
         {
-            var country = await context.Countries.FindAsync(id);
+            var country = await _context.Countries.FindAsync(id);
             if (country is null)
-            {
                 return Result.NotFound(new Error(ErrorCodes.NotFound, $"Country '{id}' was not found."));
-            }
 
-            context.Countries.Remove(country);
-            await context.SaveChangesAsync();
+            _context.Countries.Remove(country);
+            await _context.SaveChangesAsync();
 
             return Result.Success();
         }

@@ -77,7 +77,7 @@ POST {{HotelListing.Api_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-   "email": "admin1@localhost.com",
+   "email": "user@localhost.com",
   "password": "P@ssword1"
 }
 
@@ -87,10 +87,11 @@ POST {{HotelListing.Api_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
-   "email": "admin1@localhost.com",
+   "email": "user@localhost.com",
   "password": "P@ssword1",
   "firstName":"First",
-  "lastName": "Last"
+  "lastName": "Last",
+ "role": "User"
 }
 
 ###

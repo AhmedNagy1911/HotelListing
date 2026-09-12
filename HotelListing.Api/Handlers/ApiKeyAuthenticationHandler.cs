@@ -18,6 +18,7 @@ public class ApiKeyAuthenticationHandler(
     {
         string apiKey = string.Empty;
 
+        // 1. بيقرأ الـ header بتاع X-Api-Key
         if (Request.Headers.TryGetValue(AuthenticationDefaults.ApiKeyHeaderName, out var headerValues))
         {
             apiKey = headerValues.ToString();
@@ -28,12 +29,14 @@ public class ApiKeyAuthenticationHandler(
             return AuthenticateResult.NoResult();
         }
 
+        // 2. بيتحقق من الداتابيز
         var valid = await apiKeyValidatorService.IsValidAsync(apiKey, Context.RequestAborted);
         if (!valid)
         {
             return AuthenticateResult.Fail("Invalid API key.");
         }
 
+        // 3. بيبني identity ثابت (مش مرتبط بيوزر معين)
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, "apikey"),

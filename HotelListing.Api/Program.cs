@@ -19,6 +19,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => { })
 
 builder.Services.AddScoped<ICountriesService, CountriesService>();
 builder.Services.AddScoped<IHotelsService, HotelsService>();
+builder.Services.AddScoped<IUsersService, UsersService>();
 
 builder.Services.AddAutoMapper(cfg =>
 {

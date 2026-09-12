@@ -8,4 +8,6 @@ public class HotelListingDbContext(DbContextOptions<HotelListingDbContext> optio
 {
     public DbSet<Country> Countries { get; set; }
     public DbSet<Hotel> Hotels { get; set; }
+    public DbSet<ApiKey> ApiKeys { get; set; }
+
 }

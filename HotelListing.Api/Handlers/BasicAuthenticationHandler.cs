@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using HotelListing.Api.Contracts;
+﻿using HotelListing.Api.Contracts;
 using HotelListing.Api.DTOs.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;

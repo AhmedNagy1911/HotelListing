@@ -13,9 +13,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<HotelListingDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => { })
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<HotelListingDbContext>();
+
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+
 
 builder.Services.AddScoped<ICountriesService, CountriesService>();
 builder.Services.AddScoped<IHotelsService, HotelsService>();
@@ -38,6 +42,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.MapGroup("api/defaultauth").MapIdentityApi<ApplicationUser>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

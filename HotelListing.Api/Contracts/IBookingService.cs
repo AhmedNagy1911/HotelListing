@@ -6,4 +6,5 @@ namespace HotelListing.Api.Contracts;
 public interface IBookingService
 {
     Task<Result<IEnumerable<GetBookingDto>>> GetBookingsForHotelAsync(int hotelId);
+    Task<Result<GetBookingDto>> CreateBookingAsync(CreateBookingDto dto);
 }

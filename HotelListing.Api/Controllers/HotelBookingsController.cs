@@ -15,15 +15,16 @@ public class HotelBookingsController(IBookingService bookingService) : BaseApiCo
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetBookingDto>>> GetBookings([FromRoute] int hotelId)
     {
-        var bookings = await _bookingService.GetBookingsForHotelAsync(hotelId);
+        var result = await _bookingService.GetBookingsForHotelAsync(hotelId);
 
-        return ToActionResult(bookings);
+        return ToActionResult(result);
     }
 
     [HttpPost]
     public async Task<ActionResult<GetBookingDto>> CreateBooking([FromRoute] int hotelId,[FromBody] CreateBookingDto createBookingDto)
     {
-        //  var booking = await _bookingService.CreateBookingAsync(hotelId, createBookingDto);
-        return CreatedAtAction(nameof(GetBookings), new { hotelId = hotelId }, null);
+        var result = await _bookingService.CreateBookingAsync(createBookingDto);
+
+        return ToActionResult(result);
     }
 }

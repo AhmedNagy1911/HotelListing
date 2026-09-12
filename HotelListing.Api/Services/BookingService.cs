@@ -1,6 +1,7 @@
 ﻿using HotelListing.Api.Constants;
 using HotelListing.Api.Contracts;
 using HotelListing.Api.Data;
+using HotelListing.Api.Data.Enums;
 using HotelListing.Api.DTOs.Booking;
 using HotelListing.Api.Results;
 using Microsoft.EntityFrameworkCore;
@@ -49,5 +50,54 @@ public class BookingService(HotelListingDbContext context , IHttpContextAccessor
         var nights = dto.CheckOut.DayNumber - dto.CheckIn.DayNumber;
         if (nights <= 0)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "Check-out date must be after check-in date."));
+
+        var hotel = await context.Hotels
+           .Where(h => h.Id == dto.HotelId)
+           .FirstOrDefaultAsync();
+
+        if (hotel is null)
+            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.NotFound, $"Hotel '{dto.HotelId}' was not found."));
+       
+        var overlaps = await context.Bookings.AnyAsync(
+            b => b.HotelId == dto.HotelId
+                 && b.Status != BookingStatus.Cancelled 
+                 && dto.CheckIn < b.CheckOut
+                 && dto.CheckOut > b.CheckIn
+                 && b.UserId == userId
+        );
+
+        if (overlaps)
+            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Conflict, "The selected dates overlap with an existing booking."));
+       
+        var totalPrice = hotel.PerNightRate * nights;
+
+        var booking = new Booking
+        {
+            HotelId = dto.HotelId,
+            UserId = userId,
+            CheckIn = dto.CheckIn,
+            CheckOut = dto.CheckOut,
+            Guests = dto.Guests,
+            TotalPrice = totalPrice,
+            Status = BookingStatus.Pending,
+        };
+
+        context.Bookings.Add(booking);
+        await context.SaveChangesAsync();
+
+        var created = new GetBookingDto(
+            booking.Id,
+            hotel.Id,
+            hotel.Name,
+            dto.CheckIn,
+            dto.CheckOut,
+            dto.Guests,
+            totalPrice,
+            BookingStatus.Pending.ToString(),
+            booking.CreatedAtUtc,
+            booking.UpdatedAtUtc
+        );
+
+        return Result<GetBookingDto>.Success(created);
     }
 }

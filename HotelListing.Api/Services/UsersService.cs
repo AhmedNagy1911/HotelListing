@@ -13,7 +13,8 @@ namespace HotelListing.Api.Services;
 
 public class UsersService(UserManager<ApplicationUser> userManager,
     IConfiguration configuration,
-    IHttpContextAccessor httpContextAccessor) : IUsersService
+    IHttpContextAccessor httpContextAccessor,
+    HotelListingDbContext hotelListingDbContext) : IUsersService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
@@ -35,6 +36,18 @@ public class UsersService(UserManager<ApplicationUser> userManager,
         }
 
         await _userManager.AddToRoleAsync(user, registerUserDto.Role);
+
+        // If Hotel Admin, add to HotelAdmins table
+        if (registerUserDto.Role  == "Hotel Admin")
+        {
+            var hotelAdmin = hotelListingDbContext.HotelAdmins.Add(
+                new HotelAdmin
+                {
+                    UserId = user.Id,
+                    HotelId = registerUserDto.AssociatedHotelId.GetValueOrDefault()
+                });
+            await hotelListingDbContext.SaveChangesAsync();
+        }
 
         var registeredUserDto = new RegisteredUserDto
         {

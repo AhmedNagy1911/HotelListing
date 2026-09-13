@@ -2,7 +2,6 @@ using HotelListing.Api.Constants;
 using HotelListing.Api.Contracts;
 using HotelListing.Api.Data;
 using HotelListing.Api.Handlers;
-using HotelListing.Api.MappingProfiles;
 using HotelListing.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

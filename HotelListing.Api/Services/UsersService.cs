@@ -11,9 +11,13 @@ using System.Text;
 
 namespace HotelListing.Api.Services;
 
-public class UsersService(UserManager<ApplicationUser> userManager, IConfiguration configuration) : IUsersService
+public class UsersService(UserManager<ApplicationUser> userManager,
+    IConfiguration configuration,
+    IHttpContextAccessor httpContextAccessor,
+    HotelListingDbContext hotelListingDbContext) : IUsersService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     public async Task<Result<RegisteredUserDto>> RegisterUserAsync(RegisterUserDto registerUserDto)
     {
@@ -32,6 +36,18 @@ public class UsersService(UserManager<ApplicationUser> userManager, IConfigurati
         }
 
         await _userManager.AddToRoleAsync(user, registerUserDto.Role);
+
+        // If Hotel Admin, add to HotelAdmins table
+        if (registerUserDto.Role  == "Hotel Admin")
+        {
+            var hotelAdmin = hotelListingDbContext.HotelAdmins.Add(
+                new HotelAdmin
+                {
+                    UserId = user.Id,
+                    HotelId = registerUserDto.AssociatedHotelId.GetValueOrDefault()
+                });
+            await hotelListingDbContext.SaveChangesAsync();
+        }
 
         var registeredUserDto = new RegisteredUserDto
         {
@@ -92,4 +108,14 @@ public class UsersService(UserManager<ApplicationUser> userManager, IConfigurati
         // Return token value
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    public string UserId => _httpContextAccessor?
+           .HttpContext?
+           .User?
+           .FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+       ?? _httpContextAccessor?
+           .HttpContext?
+           .User?
+           .FindFirst(ClaimTypes.NameIdentifier)?.Value
+       ?? string.Empty;
 }

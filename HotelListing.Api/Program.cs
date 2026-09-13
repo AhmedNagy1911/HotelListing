@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -23,9 +24,12 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<HotelListingDbContext>();
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddAuthentication(options => {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
@@ -52,12 +56,10 @@ builder.Services.AddScoped<ICountriesService, CountriesService>();
 builder.Services.AddScoped<IHotelsService, HotelsService>();
 builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<IApiKeyValidatorService, ApiKeyValidatorService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddProfile<CountryMappingProfile>();
-    cfg.AddProfile<HotelMappingProfile>();
-});
+
+builder.Services.AddAutoMapper(cfg => { }, Assembly.GetExecutingAssembly());
 
 
 

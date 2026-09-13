@@ -1,5 +1,5 @@
-﻿using HotelListing.Api.DTOs.Booking;
-using HotelListing.Api.Results;
+﻿using HotelListing.Api.Common.Results;
+using HotelListing.Api.DTOs.Booking;
 
 namespace HotelListing.Api.Contracts;
 

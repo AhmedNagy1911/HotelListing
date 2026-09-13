@@ -1,5 +1,5 @@
-﻿using HotelListing.Api.DTOs.Country;
-using HotelListing.Api.Results;
+﻿using HotelListing.Api.Common.Results;
+using HotelListing.Api.DTOs.Country;
 
 namespace HotelListing.Api.Contracts;
 

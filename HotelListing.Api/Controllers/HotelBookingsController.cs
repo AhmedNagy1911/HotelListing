@@ -34,14 +34,14 @@ public class HotelBookingsController(IBookingService bookingService) : BaseApiCo
        [FromRoute] int bookingId,
        [FromBody] UpdateBookingDto updateBookingDto)
     {
-        var result = await bookingService.UpdateBookingAsync(hotelId, bookingId, updateBookingDto);
+        var result = await _bookingService.UpdateBookingAsync(hotelId, bookingId, updateBookingDto);
         return ToActionResult(result);
     }
 
     [HttpPut("{bookingId:int}/cancel")]
     public async Task<IActionResult> CancelBooking([FromRoute] int hotelId, [FromRoute] int bookingId)
     {
-        var result = await bookingService.CancelBookingAsync(hotelId, bookingId);
+        var result = await _bookingService.CancelBookingAsync(hotelId, bookingId);
         return ToActionResult(result);
     }
 
@@ -49,7 +49,7 @@ public class HotelBookingsController(IBookingService bookingService) : BaseApiCo
     //[HotelOrSystemAdmin]
     public async Task<IActionResult> AdminCancelBooking([FromRoute] int hotelId, [FromRoute] int bookingId)
     {
-        var result = await bookingService.AdminCancelBookingAsync(hotelId, bookingId);
+        var result = await _bookingService.AdminCancelBookingAsync(hotelId, bookingId);
         return ToActionResult(result);
     }
 
@@ -57,7 +57,7 @@ public class HotelBookingsController(IBookingService bookingService) : BaseApiCo
     //[HotelOrSystemAdmin]
     public async Task<IActionResult> AdminConfirmBooking([FromRoute] int hotelId, [FromRoute] int bookingId)
     {
-        var result = await bookingService.AdminConfirmBookingAsync(hotelId, bookingId);
+        var result = await _bookingService.AdminConfirmBookingAsync(hotelId, bookingId);
         return ToActionResult(result);
     }
 }

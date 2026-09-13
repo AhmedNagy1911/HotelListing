@@ -95,3 +95,28 @@ Content-Type: application/json
 }
 
 ###
+
+GET {{HotelListing.Api_HostAddress}}/api/hotels/{hotelId:int}/bookings/admin
+
+###
+
+PUT {{HotelListing.Api_HostAddress}}/api/hotels/{hotelId:int}/bookings/{bookingId:int}
+Content-Type: application/json
+
+{
+  //UpdateBookingDto
+}
+
+###
+
+PUT {{HotelListing.Api_HostAddress}}/api/hotels/{hotelId:int}/bookings/{bookingId:int}/admin/cancel
+
+###
+
+PUT {{HotelListing.Api_HostAddress}}/api/hotels/{hotelId:int}/bookings/{bookingId:int}/admin/confirm
+
+###
+
+PUT {{HotelListing.Api_HostAddress}}/api/hotels/{hotelId:int}/bookings/{bookingId:int}/cancel
+
+###

@@ -32,6 +32,7 @@ public class BookingService(HotelListingDbContext context,
 
         return Result<IEnumerable<GetBookingDto>>.Success(bookings);
     }
+
     public async Task<Result<IEnumerable<GetBookingDto>>> GetUserBookingsForHotelAsync(int hotelId)
     {
         var userId = _usersService.UserId;
@@ -48,6 +49,7 @@ public class BookingService(HotelListingDbContext context,
 
         return Result<IEnumerable<GetBookingDto>>.Success(bookings);
     }
+
     public async Task<Result<GetBookingDto>> CreateBookingAsync(CreateBookingDto dto)
     {
         var userId = _usersService.UserId;
@@ -112,6 +114,7 @@ public class BookingService(HotelListingDbContext context,
         return Result<GetBookingDto>.Success(updated);
     }
 
+    //بتتأكد إن اليوزر مش هيعمل حجز في نفس الفندق بتواريخ بتتقاطع (overlap) مع حجز تاني موجود ليه بالفعل.
     private async Task<bool> IsOverlap(int hotelId, string userId, DateOnly checkIn, DateOnly checkOut, int? bookingId = null)
     {
         var query = _context.Bookings

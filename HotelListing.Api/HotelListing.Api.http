@@ -77,7 +77,7 @@ POST {{HotelListing.Api_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-   "email": "user@localhost.com",
+  "email": "user@localhost.com",
   "password": "P@ssword1"
 }
 

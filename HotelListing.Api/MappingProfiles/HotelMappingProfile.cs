@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using HotelListing.Api.Data;
+using HotelListing.Api.Domain;
 using HotelListing.Api.DTOs.Hotel;
 namespace HotelListing.Api.MappingProfiles;
 

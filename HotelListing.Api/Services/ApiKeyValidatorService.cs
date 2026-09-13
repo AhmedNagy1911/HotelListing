@@ -1,5 +1,5 @@
 ﻿using HotelListing.Api.Contracts;
-using HotelListing.Api.Data;
+using HotelListing.Api.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Api.Services;

@@ -1,9 +1,11 @@
 ﻿using HotelListing.Api.Common.Constants;
+using HotelListing.Api.Common.Models;
 using HotelListing.Api.Common.Results;
 using HotelListing.Api.Contracts;
 using HotelListing.Api.Data;
 using HotelListing.Api.DTOs.Auth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,11 +14,12 @@ using System.Text;
 namespace HotelListing.Api.Services;
 
 public class UsersService(UserManager<ApplicationUser> userManager,
-    IConfiguration configuration,
+    IOptions<JwtSettings> jwtOptions,
     IHttpContextAccessor httpContextAccessor,
     HotelListingDbContext hotelListingDbContext) : IUsersService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly JwtSettings _jwtOptions = jwtOptions.Value;
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     public async Task<Result<RegisteredUserDto>> RegisterUserAsync(RegisterUserDto registerUserDto)
@@ -93,15 +96,15 @@ public class UsersService(UserManager<ApplicationUser> userManager,
         claims = claims.Union(roleClaims).ToList();
 
         // Set JWT Key credentials
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"] ?? string.Empty));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         // Create an encoded token
         var token = new JwtSecurityToken(
-            issuer: configuration["JwtSettings:Issuer"],
-            audience: configuration["JwtSettings:Audience"],
+            issuer: _jwtOptions.Issuer,
+            audience: _jwtOptions.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(Convert.ToInt32(configuration["JwtSettings:DurationInMinutes"])),
+            expires: DateTime.UtcNow.AddMinutes(_jwtOptions.DurationInMinutes),
             signingCredentials: credentials
             );
 

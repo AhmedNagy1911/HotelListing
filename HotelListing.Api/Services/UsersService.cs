@@ -11,9 +11,12 @@ using System.Text;
 
 namespace HotelListing.Api.Services;
 
-public class UsersService(UserManager<ApplicationUser> userManager, IConfiguration configuration) : IUsersService
+public class UsersService(UserManager<ApplicationUser> userManager,
+    IConfiguration configuration,
+    IHttpContextAccessor httpContextAccessor) : IUsersService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     public async Task<Result<RegisteredUserDto>> RegisterUserAsync(RegisterUserDto registerUserDto)
     {
@@ -92,4 +95,14 @@ public class UsersService(UserManager<ApplicationUser> userManager, IConfigurati
         // Return token value
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    public string UserId => _httpContextAccessor?
+           .HttpContext?
+           .User?
+           .FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+       ?? _httpContextAccessor?
+           .HttpContext?
+           .User?
+           .FindFirst(ClaimTypes.NameIdentifier)?.Value
+       ?? string.Empty;
 }

@@ -1,4 +1,5 @@
-﻿using HotelListing.Api.Constants;
+﻿using AutoMapper;
+using HotelListing.Api.Constants;
 using HotelListing.Api.Contracts;
 using HotelListing.Api.Data;
 using HotelListing.Api.Data.Enums;
@@ -9,10 +10,15 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace HotelListing.Api.Services;
 
-public class BookingService(HotelListingDbContext context , IHttpContextAccessor httpContextAccessor) : IBookingService
+public class BookingService(HotelListingDbContext context,
+    IHttpContextAccessor httpContextAccessor,
+    IMapper mapper,
+    IUsersService usersService) : IBookingService
 {
     private readonly HotelListingDbContext _context = context;
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+    private readonly IMapper _mapper = mapper;
+    private readonly IUsersService _usersService = usersService;
 
     public async Task<Result<IEnumerable<GetBookingDto>>> GetBookingsForHotelAsync (int hotelId)
     {
@@ -51,14 +57,14 @@ public class BookingService(HotelListingDbContext context , IHttpContextAccessor
         if (nights <= 0)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "Check-out date must be after check-in date."));
 
-        var hotel = await context.Hotels
+        var hotel = await _context.Hotels
            .Where(h => h.Id == dto.HotelId)
            .FirstOrDefaultAsync();
 
         if (hotel is null)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.NotFound, $"Hotel '{dto.HotelId}' was not found."));
        
-        var overlaps = await context.Bookings.AnyAsync(
+        var overlaps = await _context.Bookings.AnyAsync(
             b => b.HotelId == dto.HotelId
                  && b.Status != BookingStatus.Cancelled 
                  && dto.CheckIn < b.CheckOut
@@ -82,8 +88,8 @@ public class BookingService(HotelListingDbContext context , IHttpContextAccessor
             Status = BookingStatus.Pending,
         };
 
-        context.Bookings.Add(booking);
-        await context.SaveChangesAsync();
+        _context.Bookings.Add(booking);
+        await _context.SaveChangesAsync();
 
         var created = new GetBookingDto(
             booking.Id,
@@ -99,5 +105,85 @@ public class BookingService(HotelListingDbContext context , IHttpContextAccessor
         );
 
         return Result<GetBookingDto>.Success(created);
+    }
+
+    public async Task<Result<GetBookingDto>> UpdateBookingAsync(int hotelId, int bookingId, UpdateBookingDto dto)
+    {
+        var userId = _usersService.UserId();
+
+        bool overlaps = await IsOverlap(hotelId, userId, dto.CheckIn, dto.CheckOut, bookingId);
+
+        if (overlaps)
+            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Conflict, "The selected dates overlap with an existing booking."));
+
+        var booking = await _context.Bookings
+            .Include(b => b.Hotel)
+            .FirstOrDefaultAsync(b =>
+                b.Id == bookingId
+                && b.HotelId == hotelId
+                && b.UserId == userId);
+
+        if (booking is null)
+            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.NotFound, $"Booking '{bookingId}' was not found."));
+
+        if (booking.Status == BookingStatus.Cancelled)
+            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Conflict, "Cancelled bookings cannot be modified."));
+
+        _mapper.Map(dto, booking);
+
+        var perNight = booking.Hotel!.PerNightRate;
+
+        var nights = dto.CheckOut.DayNumber - dto.CheckIn.DayNumber;
+        booking.TotalPrice = perNight * nights;
+        booking.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        var updated = _mapper.Map<GetBookingDto>(booking);
+
+        return Result<GetBookingDto>.Success(updated);
+    }
+
+    private async Task<bool> IsOverlap(int hotelId, string userId, DateOnly checkIn, DateOnly checkOut, int? bookingId = null)
+    {
+        var query = _context.Bookings
+            .Where(
+                    b => b.HotelId == hotelId
+                    && b.Status != BookingStatus.Cancelled
+                    && checkIn < b.CheckOut
+                    && checkOut > b.CheckIn
+                    && b.UserId == userId)
+            .AsQueryable();
+
+        if (bookingId.HasValue)
+        {
+            query = query.Where(q => q.Id != bookingId.Value);
+        }
+
+        return await query.AnyAsync();
+    }
+
+    public async Task<Result> CancelBookingAsync(int hotelId, int bookingId)
+    {
+        var userId = _usersService.UserId();
+
+        var booking = await _context.Bookings
+            .Include(b => b.Hotel)
+            .FirstOrDefaultAsync(b =>
+                b.Id == bookingId
+                && b.HotelId == hotelId
+                && b.UserId == userId);
+
+        if (booking is null)
+            return Result.Failure(new Error(ErrorCodes.NotFound, $"Booking '{bookingId}' was not found."));
+
+        if (booking.Status == BookingStatus.Cancelled)
+            return Result.Failure(new Error(ErrorCodes.Conflict, "This booking has already been cancelled."));
+
+        booking.Status = BookingStatus.Cancelled;
+        booking.UpdatedAtUtc = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return Result.Success();
     }
 }

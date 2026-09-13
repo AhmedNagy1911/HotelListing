@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -57,11 +58,8 @@ builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<IApiKeyValidatorService, ApiKeyValidatorService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddProfile<CountryMappingProfile>();
-    cfg.AddProfile<HotelMappingProfile>();
-});
+
+builder.Services.AddAutoMapper(cfg => { }, Assembly.GetExecutingAssembly());
 
 
 

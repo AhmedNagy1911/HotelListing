@@ -32,7 +32,22 @@ public class BookingService(HotelListingDbContext context,
 
         return Result<IEnumerable<GetBookingDto>>.Success(bookings);
     }
+    public async Task<Result<IEnumerable<GetBookingDto>>> GetUserBookingsForHotelAsync(int hotelId)
+    {
+        var userId = _usersService.UserId;
 
+        var hotelExists = await _context.Hotels.AnyAsync(h => h.Id == hotelId);
+        if (!hotelExists)
+            return Result<IEnumerable<GetBookingDto>>.Failure(new Error(ErrorCodes.NotFound, $"Hotel '{hotelId}' was not found."));
+
+        var bookings = await _context.Bookings
+            .Where(b => b.HotelId == hotelId && b.UserId == userId)
+            .OrderBy(b => b.CheckIn)
+            .ProjectTo<GetBookingDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return Result<IEnumerable<GetBookingDto>>.Success(bookings);
+    }
     public async Task<Result<GetBookingDto>> CreateBookingAsync(CreateBookingDto dto)
     {
         var userId = _usersService.UserId;

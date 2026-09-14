@@ -4,6 +4,7 @@ using HotelListing.Api.Application.Contracts;
 using HotelListing.Api.Application.DTOs.Hotel;
 using HotelListing.Api.Common.Constants;
 using HotelListing.Api.Common.Models.Extensions;
+using HotelListing.Api.Common.Models.Filtering;
 using HotelListing.Api.Common.Models.Paging;
 using HotelListing.Api.Common.Results;
 using HotelListing.Api.Domain;
@@ -19,8 +20,46 @@ public class HotelsService(HotelListingDbContext context,
     private readonly ICountriesService _countriesService = countriesService;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<Result<PagedResult<GetHotelDto>>> GetHotelsAsync(PaginationParameters paginationParameters)
+    public async Task<Result<PagedResult<GetHotelDto>>> GetHotelsAsync(PaginationParameters paginationParameters, HotelFilterParameters filters)
     {
+        var query = _context.Hotels.AsQueryable();
+        if (filters.CountryId.HasValue)
+        {
+            query = query.Where(q => q.CountryId == filters.CountryId);
+        }
+
+        if (filters.MinRating.HasValue)
+            query = query.Where(h => h.Rating >= filters.MinRating);
+
+        if (filters.MaxRating.HasValue)
+            query = query.Where(h => h.Rating <= filters.MaxRating);
+
+        if (filters.MinPrice.HasValue)
+            query = query.Where(h => h.PerNightRate >= filters.MinPrice);
+
+        if (filters.MaxPrice.HasValue)
+            query = query.Where(h => h.PerNightRate <= filters.MaxPrice);
+
+        if (!string.IsNullOrWhiteSpace(filters.Location))
+            query = query.Where(h => h.Address.Contains(filters.Location));
+
+        // generic search param
+        if (!string.IsNullOrWhiteSpace(filters.Search))
+            query = query.Where(h => h.Name.Contains(filters.Search) ||
+                                    h.Address.Contains(filters.Search));
+
+        query = filters.SortBy?.ToLower() switch
+        {
+            "name" => filters.SortDescending ?
+                query.OrderByDescending(h => h.Name) : query.OrderBy(h => h.Name),
+            "rating" => filters.SortDescending ?
+                query.OrderByDescending(h => h.Rating) : query.OrderBy(h => h.Rating),
+            "price" => filters.SortDescending ?
+                query.OrderByDescending(h => h.PerNightRate) : query.OrderBy(h => h.PerNightRate),
+            _ => query.OrderBy(h => h.Name)
+        };
+
+
         var hotels = await _context.Hotels
             .ProjectTo<GetHotelDto>(_mapper.ConfigurationProvider)
             .ToPagedResultAsync(paginationParameters);

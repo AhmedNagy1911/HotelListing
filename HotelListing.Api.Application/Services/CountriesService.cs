@@ -31,6 +31,7 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
         }
 
         var countries = await query
+            .AsNoTracking()
             .ProjectTo<GetCountriesDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
@@ -41,6 +42,7 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
     {
 
         var country = await _context.Countries
+            .AsNoTracking()
             .Where(q => q.Id == id)
             .ProjectTo<GetCountryDto>(_mapper.ConfigurationProvider)
             .FirstOrDefaultAsync();
@@ -63,10 +65,7 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
             _context.Countries.Add(country);
             await _context.SaveChangesAsync();
 
-            var dto = await _context.Countries
-                .Where(c => c.Id == country.Id)
-                .ProjectTo<GetCountryDto>(_mapper.ConfigurationProvider)
-                .FirstAsync();
+            var dto = _mapper.Map<GetCountryDto>(country);
 
             return Result<GetCountryDto>.Success(dto);
         }
@@ -122,11 +121,11 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
 
     public async Task<bool> CountryExistsAsync(int id)
     {
-        return await _context.Countries.AnyAsync(e => e.Id == id);
+        return await _context.Countries.AsNoTracking().AnyAsync(e => e.Id == id);
     }
     public async Task<bool> CountryExistsAsync(string name)
     {
-        return await _context.Countries.AnyAsync(c => c.Name.ToLower().Trim() == name.ToLower().Trim());
+        return await _context.Countries.AsNoTracking().AnyAsync(c => c.Name.ToLower().Trim() == name.ToLower().Trim());
     }
 
     public async Task<Result<GetCountryHotelsDto>> GetCountryHotelsAsync(int countryId, PaginationParameters paginationParameters, CountryFilterParameters filters)

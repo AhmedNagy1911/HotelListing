@@ -160,7 +160,7 @@ public class CountriesService(HotelListingDbContext context , IMapper mapper) : 
         };
 
         var pagedHotels = await hotelsQuery
-            .ProjectTo<GetHotelSlimDto>(mapper.ConfigurationProvider)
+            .ProjectTo<GetHotelSlimDto>(_mapper.ConfigurationProvider)
             .ToPagedResultAsync(paginationParameters);
 
         var result = new GetCountryHotelsDto

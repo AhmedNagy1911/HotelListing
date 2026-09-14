@@ -60,9 +60,10 @@ public class HotelsService(HotelListingDbContext context,
         };
 
 
-        var hotels = await _context.Hotels
-            .ProjectTo<GetHotelDto>(_mapper.ConfigurationProvider)
-            .ToPagedResultAsync(paginationParameters);
+        var hotels = await query
+           .Include(q => q.Country)
+           .ProjectTo<GetHotelDto>(_mapper.ConfigurationProvider)
+           .ToPagedResultAsync(paginationParameters);
 
         return Result<PagedResult<GetHotelDto>>.Success(hotels);
     }

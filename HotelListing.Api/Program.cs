@@ -6,6 +6,7 @@ using HotelListing.Api.Common.Constants;
 using HotelListing.Api.Common.Models.Config;
 using HotelListing.Api.Domain;
 using HotelListing.Api.Handlers;
+using HotelListing.Api.Middleware;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -110,6 +111,8 @@ try
     builder.Services.AddScoped<IApiKeyValidatorService, ApiKeyValidatorService>();
     builder.Services.AddScoped<IBookingService, BookingService>();
 
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+    builder.Services.AddProblemDetails();
 
     builder.Services.AddAutoMapper(cfg => { }, typeof(HotelMappingProfile).Assembly);
 

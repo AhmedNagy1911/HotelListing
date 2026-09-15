@@ -191,6 +191,30 @@ try
 
     var app = builder.Build();
 
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000}ms";
+
+        options.GetLevel = (httpContext, elapsed, ex) => ex != null
+        ? LogEventLevel.Error
+        : httpContext.Response.StatusCode >= 500
+            ? LogEventLevel.Error
+            : httpContext.Response.StatusCode >= 400
+                ? LogEventLevel.Warning
+                : LogEventLevel.Information;
+
+        options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+        {
+            diagnosticContext.Set("UserName", httpContext.User?.Identity?.Name ?? "anonymous");
+            diagnosticContext.Set("RemoteIP", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+
+            if (httpContext.User?.Identity?.IsAuthenticated == true)
+            {
+                diagnosticContext.Set("UserId", httpContext.User.FindFirst("sub")?.Value ?? "unknown");
+            }
+        };
+    });
+
     app.MapGroup("api/defaultauth").MapIdentityApi<ApplicationUser>();
 
     // Configure the HTTP request pipeline.

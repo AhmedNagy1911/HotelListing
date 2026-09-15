@@ -6,15 +6,16 @@ using HotelListing.Api.Common.Models.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace HotelListing.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class CountriesController(ICountriesService countriesService) : BaseApiController
 {
     [HttpGet]
+    [OutputCache(PolicyName = CacheConstants.AuthenticatedUserCachingPolicy)]
     public async Task<ActionResult<IEnumerable<GetCountriesDto>>> GetCountries(CountryFilterParameters filters)
     {
         var result = await countriesService.GetCountriesAsync(filters);

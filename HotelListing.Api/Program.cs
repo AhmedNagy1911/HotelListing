@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using HealthChecks.UI.Client;
 using HotelListing.Api.Application.Contracts;
 using HotelListing.Api.Application.MappingProfiles;
 using HotelListing.Api.Application.Services;
@@ -14,7 +16,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using HealthChecks.UI.Client;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
@@ -204,13 +205,26 @@ try
             failureStatus: HealthStatus.Unhealthy,
             tags: ["db", "sql"]);
 
-   // builder.Services.AddHealthChecksUI(setup =>
-   // {
-   //     setup.SetEvaluationTimeInSeconds(10); // Check every 10 seconds
-   //     setup.MaximumHistoryEntriesPerEndpoint(50);
-   //     setup.AddHealthCheckEndpoint("HotelListing API", "/healthz");
-   // })
-   //.AddInMemoryStorage();
+    // builder.Services.AddHealthChecksUI(setup =>
+    // {
+    //     setup.SetEvaluationTimeInSeconds(10); // Check every 10 seconds
+    //     setup.MaximumHistoryEntriesPerEndpoint(50);
+    //     setup.AddHealthCheckEndpoint("HotelListing API", "/healthz");
+    // })
+    //.AddInMemoryStorage();
+
+    builder.Services.AddApiVersioning(options =>
+    {
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.ReportApiVersions = true;
+        options.ApiVersionReader = new UrlSegmentApiVersionReader();
+    })
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
 
     var app = builder.Build();
 

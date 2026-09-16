@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
@@ -194,6 +196,15 @@ try
         };
     });
 
+
+    builder.Services.AddHealthChecks()
+        .AddCheck("self", () => HealthCheckResult.Healthy("Application is running"),
+            tags: ["api"])
+        .AddDbContextCheck<HotelListingDbContext>(
+            name: "database",
+            failureStatus: HealthStatus.Unhealthy,
+            tags: ["db", "sql"]);
+
     var app = builder.Build();
 
     app.UseSerilogRequestLogging(options =>
@@ -261,6 +272,11 @@ try
     app.MapHealthChecks("/healthz/live", new HealthCheckOptions
     {
         Predicate = _ => false
+    });
+
+    app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
+    {
+        Predicate = check => check.Tags.Contains("db")
     });
 
     app.UseRateLimiter();

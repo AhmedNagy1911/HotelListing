@@ -17,8 +17,11 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
+using Swashbuckle.AspNetCore.Filters;
+using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -226,6 +229,100 @@ try
         options.SubstituteApiVersionInUrl = true;
     });
 
+    builder.Services.AddEndpointsApiExplorer();
+
+    builder.Services.AddSwaggerGen(options =>
+    {
+        // API Information
+        options.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Version = "v1",
+            Title = "Hotel Listing API",
+            Description = "API for managing hotels, countries, and bookings",
+            Contact = new OpenApiContact
+            {
+                Name = "Support Team",
+                Email = "support@hotellisting.com"
+            },
+            License = new OpenApiLicense
+            {
+                Name = "MIT License",
+                Url = new Uri("https://opensource.org/licenses/MIT")
+            }
+        });
+
+        options.SwaggerDoc("v2", new OpenApiInfo
+        {
+            Version = "v2",
+            Title = "Hotel Listing API V2",
+            Description = "Version 2 of the Hotel Listing API with enhanced features"
+        });
+
+        // Include only matching grouped endpoints in each Swagger document.
+        // This assumes your controllers/actions use ApiExplorer group names such as "v1" and "v2".
+        options.DocInclusionPredicate((documentName, apiDescription) =>
+        {
+            return apiDescription.GroupName is null ||
+                   string.Equals(apiDescription.GroupName, documentName, StringComparison.OrdinalIgnoreCase);
+        });
+
+        // Include XML comments
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+        if (File.Exists(xmlPath))
+        {
+            options.IncludeXmlComments(xmlPath);
+        }
+
+        // Enable Swashbuckle annotations
+        options.EnableAnnotations();
+
+        // JWT Bearer Authentication
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Description = "JWT Authorization header using the Bearer scheme. Example: Bearer {token}",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = JwtBearerDefaults.AuthenticationScheme,
+            BearerFormat = "JWT"
+        });
+
+        // API Key Authentication
+        options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+        {
+            Description = "API key needed to access endpoints. Header format: X-Api-Key: {API Key}",
+            In = ParameterLocation.Header,
+            Name = "X-Api-Key",
+            Type = SecuritySchemeType.ApiKey
+        });
+
+        // Basic Authentication
+        options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+        {
+            Description = "Basic authentication using the Authorization header.",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "basic"
+        });
+
+        // Recommended: apply security per operation using your operation filter.
+        // Do NOT also add a global security requirement unless every endpoint requires auth.
+        options.OperationFilter<SecurityRequirementsOperationFilter>();
+
+        // Example filters
+        options.ExampleFilters();
+
+        // Order actions by route and HTTP method
+        options.OrderActionsBy(apiDesc => $"{apiDesc.RelativePath}_{apiDesc.HttpMethod}");
+    });
+
+    builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
+
+
+
     var app = builder.Build();
 
     app.UseSerilogRequestLogging(options =>
@@ -257,7 +354,20 @@ try
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi();
+          app.MapOpenApi();
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Hotel Listing API V1");
+            options.SwaggerEndpoint("/swagger/v2/swagger.json", "Hotel Listing API V2");
+            options.RoutePrefix = "swagger";
+            options.DocumentTitle = "Hotel Listing API Documentation";
+            options.DisplayRequestDuration();
+            options.EnableDeepLinking();
+            options.EnableFilter();
+            options.ShowExtensions();
+            options.EnableValidator();
+        });
     }
 
     app.UseHttpsRedirection();
